@@ -1,18 +1,24 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import connectDB from "./config/db.js"; // ✅ CHECK THIS LINE
+import connectDB from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 
-// ✅ THIS LINE MUST EXIST
+// ✅ connect database
 connectDB();
 
 const app = express();
 
+// ✅ middleware FIRST
 app.use(cors());
 app.use(express.json());
 
+// ✅ routes
+app.use("/api/auth", authRoutes);
+
+// ✅ test route
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
