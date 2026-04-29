@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
-import { useParams, useLocation, Link } from "react-router-dom";
+import {
+  useParams,
+  useLocation,
+  Link,
+  useNavigate,
+} from "react-router-dom";
 import api from "../services/api";
 
 const Cart = () => {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
+
   const qtyFromUrl =
     Number(new URLSearchParams(location.search).get("qty")) || 1;
 
@@ -87,48 +94,64 @@ const Cart = () => {
           Your cart is empty. <Link to="/">Go Back</Link>
         </p>
       ) : (
-        cartItems.map((item) => (
-          <div
-            key={item.product}
+        <>
+          {cartItems.map((item) => (
+            <div
+              key={item.product}
+              style={{
+                border: "1px solid #ccc",
+                marginBottom: "10px",
+                padding: "10px",
+              }}
+            >
+              <h4>{item.name}</h4>
+              <p>Price: Rs. {item.price}</p>
+
+              <label>Qty: </label>
+              <select
+                value={item.qty}
+                onChange={(e) =>
+                  updateQtyHandler(item.product, e.target.value)
+                }
+              >
+                {[...Array(item.countInStock).keys()].map((x) => (
+                  <option key={x + 1} value={x + 1}>
+                    {x + 1}
+                  </option>
+                ))}
+              </select>
+
+              <br />
+              <br />
+
+              <button
+                style={{
+                  background: "red",
+                  color: "white",
+                  border: "none",
+                  padding: "5px 10px",
+                }}
+                onClick={() => removeFromCartHandler(item.product)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+
+          {/* ✅ Checkout button */}
+          <button
+            onClick={() => navigate("/shipping")}
             style={{
-              border: "1px solid #ccc",
-              marginBottom: "10px",
+              marginTop: "20px",
               padding: "10px",
+              background: "green",
+              color: "white",
+              border: "none",
             }}
           >
-            <h4>{item.name}</h4>
-            <p>Price: Rs. {item.price}</p>
-
-            {/* ✅ Quantity selector */}
-            <label>Qty: </label>
-            <select
-              value={item.qty}
-              onChange={(e) =>
-                updateQtyHandler(item.product, e.target.value)
-              }
-            >
-              {[...Array(item.countInStock).keys()].map((x) => (
-                <option key={x + 1} value={x + 1}>
-                  {x + 1}
-                </option>
-              ))}
-            </select>
-
-            <br /><br />
-
-            <button
-              style={{
-                background: "red",
-                color: "white",
-                border: "none",
-                padding: "5px 10px",
-              }}
-              onClick={() => removeFromCartHandler(item.product)}
-            >
-              Remove
-            </button>
-          </div>
-        ))
+            Proceed to Checkout
+          </button>
+        </>
       )}
     </div>
   );

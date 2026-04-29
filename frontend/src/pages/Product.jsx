@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Card, Button, Form } from "react-bootstrap";
 import api from "../services/api";
 
 const Product = () => {
@@ -21,29 +22,30 @@ const Product = () => {
     navigate(`/cart/${id}?qty=${qty}`);
   };
 
-  if (!product) {
-    return <p>Loading product...</p>;
-  }
+  if (!product) return <p>Loading...</p>;
 
   return (
-    <div>
-      <h2>{product.name}</h2>
-      <p>Price: Rs. {product.price}</p>
+    <Card className="p-4 shadow-sm">
+      <h3>{product.name}</h3>
       <p>{product.description}</p>
+      <h5>Rs. {product.price}</h5>
 
-      <div style={{ margin: "10px 0" }}>
-        <label>Qty: </label>
-        <select value={qty} onChange={(e) => setQty(e.target.value)}>
+      <Form.Group className="my-3" controlId="qty">
+        <Form.Label>Quantity</Form.Label>
+        <Form.Select
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+        >
           {[...Array(product.countInStock || 5).keys()].map((x) => (
             <option key={x + 1} value={x + 1}>
               {x + 1}
             </option>
           ))}
-        </select>
-      </div>
+        </Form.Select>
+      </Form.Group>
 
-      <button onClick={addToCartHandler}>Add to Cart</button>
-    </div>
+      <Button onClick={addToCartHandler}>Add to Cart</Button>
+    </Card>
   );
 };
 
