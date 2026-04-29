@@ -5,9 +5,18 @@ import api from "../services/api";
 const Cart = () => {
   const { id } = useParams();
   const location = useLocation();
-  const qty = Number(new URLSearchParams(location.search).get("qty")) || 1;
+  const qtyFromUrl =
+    Number(new URLSearchParams(location.search).get("qty")) || 1;
 
   const [cartItems, setCartItems] = useState([]);
+
+  // ✅ Load cart from localStorage
+  useEffect(() => {
+    const storedCart = localStorage.getItem("cartItems");
+    if (storedCart) {
+      setCartItems(JSON.parse(storedCart));
+    }
+  }, []);
 
   // ✅ Add item to cart
   useEffect(() => {
@@ -21,19 +30,19 @@ const Cart = () => {
         name: data.name,
         image: data.image,
         price: data.price,
-        countInStock: data.countInStock,
-        qty,
+        countInStock: data.countInStock || 10,
+        qty: qtyFromUrl,
       };
 
-      const alreadyExists = cartItems.find(
+      const existItem = cartItems.find(
         (x) => x.product === item.product
       );
 
       let updatedCart;
 
-      if (alreadyExists) {
+      if (existItem) {
         updatedCart = cartItems.map((x) =>
-          x.product === alreadyExists.product ? item : x
+          x.product === existItem.product ? item : x
         );
       } else {
         updatedCart = [...cartItems, item];
@@ -47,13 +56,27 @@ const Cart = () => {
     // eslint-disable-next-line
   }, [id]);
 
-  // ✅ Load cart from localStorage
-  useEffect(() => {
-    const storedCart = localStorage.getItem("cartItems");
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
-    }
-  }, []);
+  // ✅ Update quantity
+  const updateQtyHandler = (productId, qty) => {
+    const updatedCart = cartItems.map((item) =>
+      item.product === productId
+        ? { ...item, qty: Number(qty) }
+        : item
+    );
+
+    setCartItems(updatedCart);
+    localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+  };
+
+  // ✅ Remove item
+  const removeFromCartHandler = (productId) => {
+    const updatedCart = cartItems.filter(
+      (item) => item.product !== productId
+    );
+
+    setCartItems(updatedCart);
+    localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+  };
 
   return (
     <div>
@@ -75,7 +98,35 @@ const Cart = () => {
           >
             <h4>{item.name}</h4>
             <p>Price: Rs. {item.price}</p>
-            <p>Qty: {item.qty}</p>
+
+            {/* ✅ Quantity selector */}
+            <label>Qty: </label>
+            <select
+              value={item.qty}
+              onChange={(e) =>
+                updateQtyHandler(item.product, e.target.value)
+              }
+            >
+              {[...Array(item.countInStock).keys()].map((x) => (
+                <option key={x + 1} value={x + 1}>
+                  {x + 1}
+                </option>
+              ))}
+            </select>
+
+            <br /><br />
+
+            <button
+              style={{
+                background: "red",
+                color: "white",
+                border: "none",
+                padding: "5px 10px",
+              }}
+              onClick={() => removeFromCartHandler(item.product)}
+            >
+              Remove
+            </button>
           </div>
         ))
       )}
