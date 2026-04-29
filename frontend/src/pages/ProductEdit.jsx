@@ -5,7 +5,7 @@ import api from "../services/api";
 
 const ProductEdit = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // product id (optional)
+  const { id } = useParams();
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState(0);
@@ -13,6 +13,8 @@ const ProductEdit = () => {
   const [category, setCategory] = useState("");
   const [countInStock, setCountInStock] = useState(0);
   const [description, setDescription] = useState("");
+  const [image, setImage] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
   const isEdit = Boolean(id);
@@ -29,6 +31,7 @@ const ProductEdit = () => {
         setCategory(data.category);
         setCountInStock(data.countInStock);
         setDescription(data.description);
+        setImage(data.image);
       } catch (err) {
         setError("Unable to load product");
       }
@@ -37,28 +40,46 @@ const ProductEdit = () => {
     fetchProduct();
   }, [id, isEdit]);
 
+  const uploadFileHandler = async (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("image", file);
+
+    setUploading(true);
+
+    try {
+      const { data } = await api.post("/api/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setImage(data.imageUrl);
+      setUploading(false);
+    } catch (err) {
+      setUploading(false);
+      alert("Image upload failed");
+    }
+  };
+
   const submitHandler = async (e) => {
     e.preventDefault();
 
     try {
+      const productData = {
+        name,
+        price,
+        brand,
+        category,
+        countInStock,
+        description,
+        image,
+      };
+
       if (isEdit) {
-        await api.put(`/api/products/${id}`, {
-          name,
-          price,
-          brand,
-          category,
-          countInStock,
-          description,
-        });
+        await api.put(`/api/products/${id}`, productData);
       } else {
-        await api.post("/api/products", {
-          name,
-          price,
-          brand,
-          category,
-          countInStock,
-          description,
-        });
+        await api.post("/api/products", productData);
       }
 
       navigate("/admin/products");
@@ -67,14 +88,20 @@ const ProductEdit = () => {
     }
   };
 
+  if (error) {
+    return (
+      <Container>
+        <Alert variant="danger">{error}</Alert>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <Card className="p-4 mx-auto" style={{ maxWidth: "600px" }}>
         <h3 className="mb-3">
-          {isEdit ? "Edit Product" : "Add Product"}
+          {isEdit ? "Edit Product" : "Create Product"}
         </h3>
-
-        {error && <Alert variant="danger">{error}</Alert>}
 
         <Form onSubmit={submitHandler}>
           <Form.Control
@@ -122,12 +149,36 @@ const ProductEdit = () => {
           <Form.Control
             as="textarea"
             rows={3}
-            className="mb-3"
+            className="mb-2"
             placeholder="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
           />
+
+          {/* ✅ Image upload */}
+          <Form.Control
+            className="mb-2"
+            placeholder="Image URL"
+            value={image}
+            readOnly
+          />
+
+          <Form.Control
+            type="file"
+            className="mb-3"
+            onChange={uploadFileHandler}
+          />
+
+          {uploading && <p>Uploading image...</p>}
+
+          {image && (
+            <img
+              src={image}
+              alt="product"
+              style={{ width: "100%", marginBottom: "10px" }}
+            />
+          )}
 
           <Button type="submit" className="w-100">
             Save
